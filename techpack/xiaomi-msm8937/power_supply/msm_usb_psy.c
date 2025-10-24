@@ -266,7 +266,7 @@ static void msm_usb_psy_register_psy_work(struct work_struct *work)
 	rc = msm_usb_psy_set_dp_dm(data, POWER_SUPPLY_DP_DM_DPF_DMF);
 	if (rc < 0) {
 		data->register_psy_work_retry_count++;
-		if (data->register_psy_work_retry_count <= 50) {
+		if (data->register_psy_work_retry_count <= 200) {
 			dev_err(data->dev, "Reschedule usb power supply register work");
 			schedule_delayed_work(&data->register_psy_work, msecs_to_jiffies(100));
 		} else {
