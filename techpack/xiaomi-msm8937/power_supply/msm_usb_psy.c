@@ -37,6 +37,8 @@ struct msm_usb_psy_data {
 	struct power_supply_desc usb_psy_d;
 };
 
+static struct msm_usb_psy_data *g_data = NULL;
+
 static const unsigned int msm_usb_psy_extcon_cable[] = {
 	EXTCON_USB,
 	EXTCON_USB_HOST,
@@ -258,6 +260,23 @@ static int msm_usb_psy_register_psy(struct msm_usb_psy_data *data)
 	return rc;
 }
 
+void msm_usb_psy_register_psy_external_call(void)
+{
+	struct msm_usb_psy_data *data = g_data;
+	if (data == NULL) {
+		pr_err("%s: Driver has not been probed yet\n", __func__);
+		return;
+	}
+
+	if (IS_ERR_OR_NULL(data->usb_psy)) {
+		pr_info("%s: Registering usb power supply\n", __func__);
+		cancel_delayed_work_sync(&data->register_psy_work);
+		msm_usb_psy_register_psy(g_data);
+	} else {
+		pr_err("%s: Already registered usb power supply\n", __func__);
+	}
+}
+
 static void msm_usb_psy_register_psy_work(struct work_struct *work)
 {
 	struct msm_usb_psy_data *data = container_of(work, struct msm_usb_psy_data, register_psy_work.work);
@@ -361,6 +380,7 @@ static int msm_usb_psy_probe(struct platform_device *pdev)
 	}
 
 	dev_info(data->dev, "probed successfully!\n");
+	g_data = data;
 	return 0;
 
 err_undo_extcon_register:
